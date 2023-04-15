@@ -1,6 +1,6 @@
-#!/usr/bin/env python
-# -*- encoding: utf-8 -*-
-# vim: ts=4 st=4 sts=4 expandtab syntax=python
+####!/usr/bin/env python
+#### -*- encoding: utf-8 -*-
+#### vim: ts=4 st=4 sts=4 expandtab syntax=python
 
 import sys, os, time
 import signal
@@ -76,6 +76,15 @@ TRACE_RECORD_TGID = TRACE_DIR + 'options/record-tgid'
 EVENT_DIR = TRACE_DIR + 'events/'
 TRACE_SWITCH = EVENT_DIR + 'sched/sched_switch/enable'
 TRACE_WAKEUP = EVENT_DIR + 'sched/sched_wakeup/enable'
+TRACE_WAKING = EVENT_DIR + 'sched/sched_waking/enable'
+TRACE_WAKEUP_NEW = EVENT_DIR + 'sched/sched_wakeup_new/enable'
+TRACE_PROCESS_EXEC = EVENT_DIR + 'sched/sched_process_exec/enable'
+TRACE_PROCESS_EXIT = EVENT_DIR + 'sched/sched_process_exit/enable'
+TRACE_PROCESS_FORK = EVENT_DIR + 'sched/sched_process_fork/enable'
+TRACE_PROCESS_FREE = EVENT_DIR + 'sched/sched_process_free/enable'
+TRACE_PROCESS_HANG = EVENT_DIR + 'sched/sched_process_hang/enable'
+TRACE_PROCESS_WAIT = EVENT_DIR + 'sched/sched_process_wait/enable'
+sched_list = [TRACE_SWITCH, TRACE_WAKEUP, TRACE_WAKING, TRACE_WAKEUP_NEW, TRACE_PROCESS_EXEC, TRACE_PROCESS_EXIT, TRACE_PROCESS_FORK, TRACE_PROCESS_FREE, TRACE_PROCESS_HANG, TRACE_PROCESS_WAIT]
 TRACE_MEMORY_BUS = EVENT_DIR + 'memory_bus/enable'
 TRACE_FREQUENCY = EVENT_DIR + 'power/cpu_frequency/enable'
 TRACE_CLOCK_SET_RATE = EVENT_DIR + 'power/clock_set_rate/enable'
@@ -112,9 +121,12 @@ def setTraceRecordTgid(enable):
     return setEnable(TRACE_RECORD_TGID, enable)
 
 def setSchedSwitch(enable):
-    if setEnable(TRACE_SWITCH, enable) and setEnable(TRACE_WAKEUP, enable):
-        return True
-    return False
+    for item in sched_list:
+        if not setEnable(item, enable):
+            return False
+    #if setEnable(TRACE_SWITCH, enable) and setEnable(TRACE_WAKEUP, enable):
+    #    return True
+    return True
 
 def setGpu(enable):
     BASE_DIR = EVENT_DIR + 'i915/'
@@ -205,8 +217,8 @@ def setGlobalClock(enable):
 def startTrace(options):
     if options.verbose:
         sys.stdout.write('=======Start Tracing=======\n')
-    setTraceOverwrite(True)
-    setTraceRecordTgid(True)
+    #setTraceOverwrite(True)
+    #setTraceRecordTgid(True)
     if options.trace_cpu_sched:
        setSchedSwitch(True)
     if options.trace_cpu_freq:
@@ -214,11 +226,11 @@ def startTrace(options):
     if options.trace_cpu_idle:
         setCpuIdle(True)
     setTraceBufferSize(options.trace_buf_size)
-    setGlobalClock(True)
+    #setGlobalClock(True)
     if options.trace_gpu:
         setGpu(True)
     setCustomEnable(options.trace_event, True)
-    setPid(options.trace_pid, True)
+    #setPid(options.trace_pid, True)
     setFilter(options.trace_filter, True)
 
     isRoot = False
@@ -302,6 +314,7 @@ def main(options):
     clearTrace()
     startTrace(options)
     dumpTrace(out)
+    #time.sleep(20)
     stopTrace()
     if not SIMPLE:
         out.write(html_suffix)
@@ -321,7 +334,7 @@ if __name__ == '__main__':
     parser.add_option('-t', '--time', dest='trace_time', type='int',
                     default=5, help='trace for N seconds', metavar='N')
     parser.add_option('-b', '--buf-size', dest='trace_buf_size', type='int',
-                    default=2048, help='use a trace buffer size of N KB', metavar='N')
+                    default=20480, help='use a trace buffer size of N KB', metavar='N')
     parser.add_option('-d', '--disk', dest='trace_disk', default=False,
                     action='store_true', help='trace disk I/O (requires root)')
     parser.add_option('-F', '--cpu-freq', dest='trace_cpu_freq', default=False,
